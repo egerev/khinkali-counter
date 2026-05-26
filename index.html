@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Счётчик хинкалей</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(180deg, #f5f0e8 0%, #ece4d4 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #3d3529;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 800;
+            text-align: center;
+            margin-top: 10px;
+            line-height: 1.2;
+        }
+        .khinkali-img {
+            width: 160px;
+            height: 160px;
+            margin: 15px 0;
+            font-size: 120px;
+            text-align: center;
+            line-height: 160px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+            transition: transform 0.15s;
+        }
+        .khinkali-img.bounce {
+            transform: scale(1.2);
+        }
+        .counter-box {
+            background: #faf6ef;
+            border-radius: 20px;
+            padding: 20px 50px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin: 5px 0 15px;
+        }
+        .counter {
+            font-size: 72px;
+            font-weight: 900;
+            text-align: center;
+            color: #3d3529;
+        }
+        .add-btn {
+            background: #6b8e3a;
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 16px 60px;
+            font-size: 22px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(107, 142, 58, 0.4);
+            transition: all 0.15s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .add-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 6px rgba(107, 142, 58, 0.3);
+        }
+        .reset-btn {
+            background: none;
+            border: none;
+            color: #8a7e6b;
+            font-size: 15px;
+            margin-top: 12px;
+            cursor: pointer;
+            padding: 8px 16px;
+        }
+        .reset-btn:before { content: "↻ "; }
+        .stats {
+            background: white;
+            border-radius: 16px;
+            padding: 16px 24px;
+            margin-top: 15px;
+            width: 100%;
+            max-width: 320px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+        }
+        .stats h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .stat-row {
+            display: flex;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 15px;
+        }
+        .stat-icon { margin-right: 10px; font-size: 18px; }
+        .stat-label { flex: 1; color: #6b6153; }
+        .stat-value { font-weight: 700; }
+        .footer {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #a89e8e;
+            text-align: center;
+        }
+        .footer:before { content: "🥟 "; }
+        .leaderboard {
+            background: white;
+            border-radius: 16px;
+            padding: 16px 24px;
+            margin-top: 12px;
+            width: 100%;
+            max-width: 320px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+        }
+        .leaderboard h3 { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
+        .lb-row {
+            display: flex;
+            align-items: center;
+            padding: 5px 0;
+            font-size: 14px;
+        }
+        .lb-rank { width: 24px; font-weight: 700; }
+        .lb-name { flex: 1; }
+        .lb-score { font-weight: 700; }
+    </style>
+</head>
+<body>
+    <h1>Счётчик<br>съеденных хинкалей</h1>
+    <div class="khinkali-img" id="emoji">🥟</div>
+    <div class="counter-box">
+        <div class="counter" id="count">0</div>
+    </div>
+    <button class="add-btn" id="addBtn">+1 хинкали</button>
+    <button class="reset-btn" id="resetBtn">Сбросить счётчик</button>
+
+    <div class="stats">
+        <h3>📊 Статистика</h3>
+        <div class="stat-row">
+            <span class="stat-icon">📅</span>
+            <span class="stat-label">Сегодня:</span>
+            <span class="stat-value" id="today">0</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-icon">📈</span>
+            <span class="stat-label">За неделю:</span>
+            <span class="stat-value" id="week">0</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-icon">🏆</span>
+            <span class="stat-label">Рекорд за раз:</span>
+            <span class="stat-value" id="record">0</span>
+        </div>
+    </div>
+
+    <div class="leaderboard" id="leaderboard" style="display:none">
+        <h3>🏅 Топ хинкалеедов</h3>
+        <div id="lbRows"></div>
+    </div>
+
+    <div class="footer">Ешь хинкали — устанавливай рекорды!</div>
+
+    <script>
+        const tg = window.Telegram?.WebApp;
+        if (tg) tg.expand();
+
+        const userId = tg?.initDataUnsafe?.user?.id || 'anon';
+        const userName = tg?.initDataUnsafe?.user?.first_name || 'Гость';
+
+        // Storage key per user
+        const KEY = `khinkali_${userId}`;
+        const GLOBAL_KEY = 'khinkali_leaderboard';
+
+        function loadData() {
+            try {
+                return JSON.parse(localStorage.getItem(KEY)) || { count: 0, today: 0, week: 0, record: 0, todayDate: '', weekStart: '' };
+            } catch { return { count: 0, today: 0, week: 0, record: 0, todayDate: '', weekStart: '' }; }
+        }
+
+        function saveData(data) {
+            localStorage.setItem(KEY, JSON.stringify(data));
+        }
+
+        function loadLeaderboard() {
+            try { return JSON.parse(localStorage.getItem(GLOBAL_KEY)) || {}; } catch { return {}; }
+        }
+
+        function saveLeaderboard(lb) {
+            localStorage.setItem(GLOBAL_KEY, JSON.stringify(lb));
+        }
+
+        function getToday() { return new Date().toISOString().slice(0, 10); }
+        function getWeekStart() {
+            const d = new Date();
+            d.setDate(d.getDate() - d.getDay());
+            return d.toISOString().slice(0, 10);
+        }
+
+        let data = loadData();
+        const today = getToday();
+        const weekStart = getWeekStart();
+
+        // Reset daily/weekly if needed
+        if (data.todayDate !== today) { data.today = 0; data.todayDate = today; }
+        if (data.weekStart !== weekStart) { data.week = 0; data.weekStart = weekStart; }
+
+        function render() {
+            document.getElementById('count').textContent = data.count;
+            document.getElementById('today').textContent = data.today;
+            document.getElementById('week').textContent = data.week;
+            document.getElementById('record').textContent = data.record;
+        }
+
+        function renderLeaderboard() {
+            const lb = loadLeaderboard();
+            const entries = Object.entries(lb).sort((a, b) => b[1].total - a[1].total).slice(0, 10);
+            if (entries.length < 2) { document.getElementById('leaderboard').style.display = 'none'; return; }
+            document.getElementById('leaderboard').style.display = 'block';
+            const medals = ['🥇', '🥈', '🥉'];
+            document.getElementById('lbRows').innerHTML = entries.map(([id, info], i) =>
+                `<div class="lb-row"><span class="lb-rank">${medals[i] || (i+1)}</span><span class="lb-name">${info.name}</span><span class="lb-score">${info.total}</span></div>`
+            ).join('');
+        }
+
+        function updateLeaderboard() {
+            const lb = loadLeaderboard();
+            lb[userId] = { name: userName, total: data.week, today: data.today };
+            saveLeaderboard(lb);
+            renderLeaderboard();
+        }
+
+        document.getElementById('addBtn').addEventListener('click', () => {
+            data.count++;
+            data.today++;
+            data.week++;
+            if (data.count > data.record) data.record = data.count;
+            saveData(data);
+            render();
+            updateLeaderboard();
+
+            // Bounce animation
+            const emoji = document.getElementById('emoji');
+            emoji.classList.add('bounce');
+            setTimeout(() => emoji.classList.remove('bounce'), 150);
+
+            // Haptic
+            if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if (confirm('Сбросить текущий счётчик? Статистика сохранится.')) {
+                data.count = 0;
+                saveData(data);
+                render();
+            }
+        });
+
+        render();
+        renderLeaderboard();
+    </script>
+</body>
+</html>
