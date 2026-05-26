@@ -17,303 +17,187 @@
             padding: 20px;
             color: #3d3529;
         }
-        h1 {
-            font-size: 24px;
-            font-weight: 800;
-            text-align: center;
-            margin-top: 40px;
-            line-height: 1.2;
-        }
-        .khinkali-img {
-            width: 140px;
-            height: 140px;
-            margin: 10px 0;
-            text-align: center;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
-            transition: transform 0.15s;
-        }
-        .khinkali-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-        .khinkali-img.bounce {
-            transform: scale(1.2);
-        }
-        .counter-box {
-            background: #faf6ef;
-            border-radius: 20px;
-            padding: 20px 50px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            margin: 5px 0 15px;
-        }
-        .counter {
-            font-size: 72px;
-            font-weight: 900;
-            text-align: center;
-            color: #3d3529;
-        }
+        h1 { font-size: 24px; font-weight: 800; text-align: center; margin-top: 40px; line-height: 1.2; }
+        .khinkali-img { width: 120px; height: 120px; margin: 10px 0; transition: transform 0.15s; }
+        .khinkali-img.bounce { transform: scale(1.2); }
+        .counter-box { background: #faf6ef; border-radius: 20px; padding: 15px 50px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin: 5px 0 12px; }
+        .counter { font-size: 64px; font-weight: 900; text-align: center; }
         .add-btn {
-            background: #6b8e3a;
-            color: white;
-            border: none;
-            border-radius: 16px;
-            padding: 16px 60px;
-            font-size: 22px;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(107, 142, 58, 0.4);
-            transition: all 0.15s;
-            -webkit-tap-highlight-color: transparent;
+            background: #6b8e3a; color: white; border: none; border-radius: 16px;
+            padding: 14px 50px; font-size: 20px; font-weight: 700; cursor: pointer;
+            box-shadow: 0 4px 12px rgba(107,142,58,0.4); transition: all 0.15s;
         }
-        .add-btn:active {
-            transform: scale(0.95);
-            box-shadow: 0 2px 6px rgba(107, 142, 58, 0.3);
-        }
-        .reset-btn {
-            background: none;
-            border: none;
-            color: #8a7e6b;
-            font-size: 15px;
-            margin-top: 12px;
-            cursor: pointer;
-            padding: 8px 16px;
-        }
-        .reset-btn:before { content: "↻ "; }
-        .stats {
-            background: white;
-            border-radius: 16px;
-            padding: 16px 24px;
-            margin-top: 15px;
-            width: 100%;
-            max-width: 320px;
-            box-shadow: 0 1px 6px rgba(0,0,0,0.06);
-        }
-        .stats h3 {
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-        .stat-row {
-            display: flex;
-            align-items: center;
-            padding: 6px 0;
-            font-size: 15px;
-        }
-        .stat-icon { margin-right: 10px; font-size: 18px; }
+        .add-btn:active { transform: scale(0.95); }
+        .add-btn:disabled { background: #a0a0a0; }
+        .reset-btn { background: none; border: none; color: #8a7e6b; font-size: 14px; margin-top: 10px; cursor: pointer; padding: 8px; }
+        .processing { margin: 10px 0; font-size: 15px; color: #6b8e3a; display: none; }
+        .stats { background: white; border-radius: 16px; padding: 14px 20px; margin-top: 12px; width: 100%; max-width: 320px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+        .stats h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+        .stat-row { display: flex; align-items: center; padding: 5px 0; font-size: 14px; }
+        .stat-icon { margin-right: 8px; font-size: 16px; }
         .stat-label { flex: 1; color: #6b6153; }
         .stat-value { font-weight: 700; }
-        .footer {
-            margin-top: 20px;
-            font-size: 13px;
-            color: #a89e8e;
-            text-align: center;
-        }
-        .footer:before { content: "🥟 "; }
-        .leaderboard {
-            background: white;
-            border-radius: 16px;
-            padding: 16px 24px;
-            margin-top: 12px;
-            width: 100%;
-            max-width: 320px;
-            box-shadow: 0 1px 6px rgba(0,0,0,0.06);
-        }
-        .leaderboard h3 { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
-        .lb-row {
-            display: flex;
-            align-items: center;
-            padding: 5px 0;
-            font-size: 14px;
-        }
+        .leaderboard { background: white; border-radius: 16px; padding: 14px 20px; margin-top: 10px; width: 100%; max-width: 320px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+        .leaderboard h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+        .lb-row { display: flex; align-items: center; padding: 4px 0; font-size: 13px; }
         .lb-rank { width: 24px; font-weight: 700; }
         .lb-name { flex: 1; }
         .lb-score { font-weight: 700; }
+        .footer { margin-top: 15px; font-size: 12px; color: #a89e8e; }
+        .error { color: #c44; font-size: 14px; margin: 8px 0; display: none; }
     </style>
 </head>
 <body>
     <h1>Счётчик<br>съеденных хинкалей</h1>
     <div class="khinkali-img" id="emoji">
-        <svg viewBox="0 0 200 200" width="140" height="140">
-            <defs>
-                <radialGradient id="g1" cx="40%" cy="35%">
-                    <stop offset="0%" stop-color="#f5e6c8"/>
-                    <stop offset="100%" stop-color="#d4b896"/>
-                </radialGradient>
-            </defs>
-            <!-- Body -->
+        <svg viewBox="0 0 200 200" width="120" height="120">
+            <defs><radialGradient id="g1" cx="40%" cy="35%"><stop offset="0%" stop-color="#f5e6c8"/><stop offset="100%" stop-color="#d4b896"/></radialGradient></defs>
             <ellipse cx="100" cy="120" rx="70" ry="55" fill="url(#g1)" stroke="#c4a070" stroke-width="1.5"/>
-            <!-- Top knot -->
             <path d="M100 65 Q85 50 90 35 Q95 25 100 30 Q105 25 110 35 Q115 50 100 65Z" fill="#d4b896" stroke="#c4a070" stroke-width="1.5"/>
-            <!-- Pleats -->
             <path d="M55 95 Q70 80 85 90" fill="none" stroke="#c4a070" stroke-width="1.5" opacity="0.6"/>
             <path d="M70 85 Q85 72 100 82" fill="none" stroke="#c4a070" stroke-width="1.5" opacity="0.6"/>
             <path d="M100 82 Q115 72 130 85" fill="none" stroke="#c4a070" stroke-width="1.5" opacity="0.6"/>
             <path d="M115 90 Q130 80 145 95" fill="none" stroke="#c4a070" stroke-width="1.5" opacity="0.6"/>
-            <!-- Face -->
-            <circle cx="85" cy="115" r="3" fill="#5a4a3a"/>
-            <circle cx="115" cy="115" r="3" fill="#5a4a3a"/>
+            <circle cx="85" cy="115" r="3" fill="#5a4a3a"/><circle cx="115" cy="115" r="3" fill="#5a4a3a"/>
             <path d="M92 128 Q100 135 108 128" fill="none" stroke="#5a4a3a" stroke-width="2" stroke-linecap="round"/>
-            <!-- Cheeks -->
-            <circle cx="78" cy="125" r="6" fill="#f0c0a0" opacity="0.4"/>
-            <circle cx="122" cy="125" r="6" fill="#f0c0a0" opacity="0.4"/>
+            <circle cx="78" cy="125" r="6" fill="#f0c0a0" opacity="0.4"/><circle cx="122" cy="125" r="6" fill="#f0c0a0" opacity="0.4"/>
         </svg>
     </div>
     <div class="counter-box">
-        <div class="counter" id="count">0</div>
+        <div class="counter" id="count">—</div>
     </div>
-    <button class="add-btn" id="addBtn">📸 Добавить хинкали</button>
+    <button class="add-btn" id="addBtn">📸 Сфоткать хинкали</button>
     <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none">
-    <div id="processing" style="display:none; margin: 10px 0; font-size: 16px; color: #6b8e3a;">🔄 Считаю хинкали на фото...</div>
-    <button class="reset-btn" id="resetBtn">Сбросить счётчик</button>
+    <div class="processing" id="processing">🔄 Считаю хинкали на фото...</div>
+    <div class="error" id="error"></div>
+    <button class="reset-btn" id="resetBtn">↻ Сбросить сессию</button>
 
     <div class="stats">
         <h3>📊 Статистика</h3>
-        <div class="stat-row">
-            <span class="stat-icon">📅</span>
-            <span class="stat-label">Сегодня:</span>
-            <span class="stat-value" id="today">0</span>
-        </div>
-        <div class="stat-row">
-            <span class="stat-icon">📈</span>
-            <span class="stat-label">За неделю:</span>
-            <span class="stat-value" id="week">0</span>
-        </div>
-        <div class="stat-row">
-            <span class="stat-icon">🏆</span>
-            <span class="stat-label">Рекорд за раз:</span>
-            <span class="stat-value" id="record">0</span>
-        </div>
+        <div class="stat-row"><span class="stat-icon">📅</span><span class="stat-label">Сегодня:</span><span class="stat-value" id="today">—</span></div>
+        <div class="stat-row"><span class="stat-icon">📈</span><span class="stat-label">Сессия:</span><span class="stat-value" id="session">—</span></div>
+        <div class="stat-row"><span class="stat-icon">🏆</span><span class="stat-label">Рекорд:</span><span class="stat-value" id="record">—</span></div>
+        <div class="stat-row"><span class="stat-icon">🥟</span><span class="stat-label">Всего:</span><span class="stat-value" id="total">—</span></div>
     </div>
 
-    <div class="leaderboard" id="leaderboard" style="display:none">
+    <div class="leaderboard" id="leaderboard">
         <h3>🏅 Топ хинкалеедов</h3>
-        <div id="lbRows"></div>
+        <div id="lbRows">Загрузка...</div>
     </div>
 
-    <div class="footer">Ешь хинкали — устанавливай рекорды!</div>
+    <div class="footer">🥟 Ешь хинкали — устанавливай рекорды!</div>
 
     <script>
         const tg = window.Telegram?.WebApp;
         if (tg) tg.expand();
 
-        const userId = tg?.initDataUnsafe?.user?.id || 'anon';
+        const userId = String(tg?.initDataUnsafe?.user?.id || 'anon');
         const userName = tg?.initDataUnsafe?.user?.first_name || 'Гость';
 
-        // Storage key per user
-        const KEY = `khinkali_${userId}`;
-        const GLOBAL_KEY = 'khinkali_leaderboard';
+        // API base — Mac Mini on Tailscale or localhost
+        const API = 'https://egerev.github.io/khinkali-counter'; // Will be proxied
+        // For now: direct to Mac Mini API via Tailscale IP
+        const API_BASE = window.location.hostname === 'egerev.github.io'
+            ? '' // Same-origin won't work for GH Pages → use bot chat for photos
+            : `http://${window.location.hostname}:5199`;
 
-        function loadData() {
+        async function loadStats() {
             try {
-                return JSON.parse(localStorage.getItem(KEY)) || { count: 0, today: 0, week: 0, record: 0, todayDate: '', weekStart: '' };
-            } catch { return { count: 0, today: 0, week: 0, record: 0, todayDate: '', weekStart: '' }; }
+                if (!API_BASE) { renderOffline(); return; }
+                const resp = await fetch(`${API_BASE}/api/stats/${userId}`);
+                const s = await resp.json();
+                document.getElementById('count').textContent = s.session || 0;
+                document.getElementById('today').textContent = s.today || 0;
+                document.getElementById('session').textContent = s.session || 0;
+                document.getElementById('record').textContent = s.record || 0;
+                document.getElementById('total').textContent = s.total || 0;
+            } catch(e) {
+                renderOffline();
+            }
         }
 
-        function saveData(data) {
-            localStorage.setItem(KEY, JSON.stringify(data));
+        async function loadLeaderboard() {
+            try {
+                if (!API_BASE) { return; }
+                const resp = await fetch(`${API_BASE}/api/leaderboard`);
+                const lb = await resp.json();
+                const medals = ['🥇','🥈','🥉'];
+                if (lb.length === 0) {
+                    document.getElementById('lbRows').innerHTML = 'Пока никто не ел 😢';
+                    return;
+                }
+                document.getElementById('lbRows').innerHTML = lb.map(e =>
+                    `<div class="lb-row"><span class="lb-rank">${medals[e.rank-1]||e.rank}</span><span class="lb-name">${e.name}</span><span class="lb-score">${e.total}</span></div>`
+                ).join('');
+            } catch(e) {
+                document.getElementById('lbRows').innerHTML = 'Не удалось загрузить';
+            }
         }
 
-        function loadLeaderboard() {
-            try { return JSON.parse(localStorage.getItem(GLOBAL_KEY)) || {}; } catch { return {}; }
+        function renderOffline() {
+            document.getElementById('count').textContent = '📸';
+            document.getElementById('today').textContent = '—';
+            document.getElementById('session').textContent = '—';
+            document.getElementById('record').textContent = '—';
+            document.getElementById('total').textContent = '—';
+            document.getElementById('lbRows').innerHTML = 'Отправь фото в чат бота для подсчёта';
         }
 
-        function saveLeaderboard(lb) {
-            localStorage.setItem(GLOBAL_KEY, JSON.stringify(lb));
+        async function uploadPhoto(file) {
+            if (!API_BASE) {
+                if (tg) tg.showAlert('📸 Отправь фото прямо в чат бота — там посчитаю!');
+                return;
+            }
+            const form = new FormData();
+            form.append('photo', file);
+            form.append('user_id', userId);
+            form.append('user_name', userName);
+
+            document.getElementById('processing').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('addBtn').disabled = true;
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/upload`, { method: 'POST', body: form });
+                const data = await resp.json();
+                if (data.error && data.count === 0) {
+                    document.getElementById('error').textContent = '🤔 Не вижу хинкалей! Попробуй ещё.';
+                    document.getElementById('error').style.display = 'block';
+                } else if (data.count) {
+                    // Bounce
+                    const emoji = document.getElementById('emoji');
+                    emoji.classList.add('bounce');
+                    setTimeout(() => emoji.classList.remove('bounce'), 150);
+                    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                    if (tg) tg.showAlert(`🥟 +${data.count} хинкали!`);
+                    await loadStats();
+                    await loadLeaderboard();
+                }
+            } catch(e) {
+                document.getElementById('error').textContent = 'Ошибка загрузки';
+                document.getElementById('error').style.display = 'block';
+            } finally {
+                document.getElementById('processing').style.display = 'none';
+                document.getElementById('addBtn').disabled = false;
+            }
         }
 
-        function getToday() { return new Date().toISOString().slice(0, 10); }
-        function getWeekStart() {
-            const d = new Date();
-            d.setDate(d.getDate() - d.getDay());
-            return d.toISOString().slice(0, 10);
-        }
-
-        let data = loadData();
-        const today = getToday();
-        const weekStart = getWeekStart();
-
-        // Reset daily/weekly if needed
-        if (data.todayDate !== today) { data.today = 0; data.todayDate = today; }
-        if (data.weekStart !== weekStart) { data.week = 0; data.weekStart = weekStart; }
-
-        function render() {
-            document.getElementById('count').textContent = data.count;
-            document.getElementById('today').textContent = data.today;
-            document.getElementById('week').textContent = data.week;
-            document.getElementById('record').textContent = data.record;
-        }
-
-        function renderLeaderboard() {
-            const lb = loadLeaderboard();
-            const entries = Object.entries(lb).sort((a, b) => b[1].total - a[1].total).slice(0, 10);
-            if (entries.length < 2) { document.getElementById('leaderboard').style.display = 'none'; return; }
-            document.getElementById('leaderboard').style.display = 'block';
-            const medals = ['🥇', '🥈', '🥉'];
-            document.getElementById('lbRows').innerHTML = entries.map(([id, info], i) =>
-                `<div class="lb-row"><span class="lb-rank">${medals[i] || (i+1)}</span><span class="lb-name">${info.name}</span><span class="lb-score">${info.total}</span></div>`
-            ).join('');
-        }
-
-        function updateLeaderboard() {
-            const lb = loadLeaderboard();
-            lb[userId] = { name: userName, total: data.week, today: data.today };
-            saveLeaderboard(lb);
-            renderLeaderboard();
-        }
-
-        // Add button opens camera
         document.getElementById('addBtn').addEventListener('click', () => {
             document.getElementById('photoInput').click();
         });
 
-        // Photo selected — send to bot via sendData
-        document.getElementById('photoInput').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            document.getElementById('processing').style.display = 'block';
-            document.getElementById('addBtn').disabled = true;
-
-            // Show preview bounce
-            const emoji = document.getElementById('emoji');
-            emoji.classList.add('bounce');
-            setTimeout(() => emoji.classList.remove('bounce'), 150);
-            if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-
-            // For now: add locally with estimate, user confirms via bot with actual photo
-            // WebApp can't directly send photos to bot, so we add +1 locally
-            // and prompt user to also send photo to bot chat for verification
-            data.count++;
-            data.today++;
-            data.week++;
-            if (data.count > data.record) data.record = data.count;
-            saveData(data);
-            render();
-            updateLeaderboard();
-
-            document.getElementById('processing').style.display = 'none';
-            document.getElementById('addBtn').disabled = false;
-
-            // Tell user to send photo to bot too
-            if (tg) {
-                tg.showAlert('📸 Фото принято! Отправь его также в чат боту для точного подсчёта и лидерборда.');
-            }
-
-            // Reset input
+        document.getElementById('photoInput').addEventListener('change', (e) => {
+            if (e.target.files[0]) uploadPhoto(e.target.files[0]);
             e.target.value = '';
         });
 
         document.getElementById('resetBtn').addEventListener('click', () => {
-            if (confirm('Сбросить текущий счётчик? Статистика сохранится.')) {
-                data.count = 0;
-                saveData(data);
-                render();
-            }
+            if (tg) tg.showAlert('Сброс сессии — отправь /reset в чат бота');
         });
 
-        render();
-        renderLeaderboard();
+        // Load data
+        loadStats();
+        loadLeaderboard();
     </script>
 </body>
 </html>

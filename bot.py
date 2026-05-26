@@ -1,17 +1,21 @@
-"""Khinkali Counter — Telegram Mini App bot with photo proof.
+"""Khinkali Counter — Telegram bot + API backend.
 
-Users send photos of khinkali, vision model counts them,
-adds to counter, saves photos for collage.
+Photo proof required. Vision counts khinkali.
+API serves webapp for unified stats.
 """
 
 import os
 import json
 import logging
-import tempfile
+import base64
+import re
+import asyncio
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
+from threading import Thread
 
 import httpx
+from aiohttp import web
 from telegram import Update, WebAppInfo, KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 
@@ -20,14 +24,24 @@ log = logging.getLogger("khinkali")
 
 BOT_TOKEN = os.environ["KHINKALI_BOT_TOKEN"]
 WEBAPP_URL = os.environ.get("KHINKALI_WEBAPP_URL", "https://egerev.github.io/khinkali-counter/")
+API_PORT = int(os.environ.get("KHINKALI_API_PORT", "5199"))
 
-# Storage
 DATA_DIR = Path(os.environ.get("KHINKALI_DATA_DIR", "/Users/egoregerev/mcp-servers/khinkali-bot/data"))
 PHOTOS_DIR = DATA_DIR / "photos"
 STATS_FILE = DATA_DIR / "stats.json"
 PHOTOS_DIR.mkdir(parents=True, exist_ok=True)
 
 TBILISI_TZ = timezone(timedelta(hours=4))
+
+# Anthropic key
+ANT_KEY = ""
+try:
+    auth = json.loads(Path("/opt/hermes-shared/auth.json").read_text())
+    for cred in auth.get("credential_pool", {}).get("anthropic", []):
+        ANT_KEY = cred.get("access_token", "")
+        break
+except Exception:
+    pass
 
 
 def load_stats() -> dict:
@@ -51,71 +65,67 @@ def get_user_stats(stats: dict, user_id: str) -> dict:
     return s
 
 
-async def count_khinkali_vision(photo_path: str) -> int:
-    """Use local vision model to count khinkali in photo."""
+async def count_khinkali_vision(img_data_b64: str) -> int:
+    if not ANT_KEY:
+        return 0
     try:
-        import base64
-        with open(photo_path, "rb") as f:
-            img_data = base64.b64encode(f.read()).decode()
-
-        # Try using Hermes auxiliary vision (mlx)
-        # Fallback: use OpenAI API if available
-        auth_file = Path("/opt/hermes-shared/auth.json")
-        if auth_file.exists():
-            auth = json.loads(auth_file.read_text())
-            pool = auth.get("credential_pool", {}).get("openai-codex", [])
-            token = None
-            for cred in pool:
-                if cred.get("access_token"):
-                    token = cred["access_token"]
-
-            if token:
-                async with httpx.AsyncClient(timeout=30) as client:
-                    resp = await client.post(
-                        "https://api.openai.com/v1/chat/completions",
-                        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-                        json={
-                            "model": "gpt-4o-mini",
-                            "messages": [
-                                {"role": "system", "content": "You are a khinkali counter. Look at the photo and count the number of khinkali (Georgian dumplings). Reply with ONLY a number. If you see a plate with khinkali, count them. If no khinkali visible, reply 0."},
-                                {"role": "user", "content": [
-                                    {"type": "text", "text": "How many khinkali are in this photo?"},
-                                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_data}"}}
-                                ]}
-                            ],
-                            "max_tokens": 10,
-                        },
-                    )
-                    if resp.status_code == 200:
-                        text = resp.json()["choices"][0]["message"]["content"].strip()
-                        # Extract number
-                        import re
-                        nums = re.findall(r'\d+', text)
-                        if nums:
-                            return int(nums[0])
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={
+                    "x-api-key": ANT_KEY,
+                    "anthropic-version": "2023-06-01",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "claude-haiku-4-5-20251001",
+                    "max_tokens": 20,
+                    "messages": [{
+                        "role": "user",
+                        "content": [
+                            {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": img_data_b64}},
+                            {"type": "text", "text": "Look at this plate carefully. Count ALL individual khinkali (Georgian dumplings - large round pleated dumplings with a twisted top knot). Count every single one you can see, including partially hidden ones. Reply with ONLY the number."}
+                        ]
+                    }],
+                },
+            )
+            if resp.status_code == 200:
+                text = resp.json()["content"][0]["text"].strip()
+                nums = re.findall(r'\d+', text)
+                if nums:
+                    return int(nums[0])
     except Exception as exc:
-        log.warning(f"Vision count failed: {exc}")
+        log.warning(f"Vision failed: {exc}")
     return 0
 
 
-def format_leaderboard(stats: dict) -> str:
+def add_khinkali(user_id: str, user_name: str, count: int, photo_path: str = "") -> dict:
+    stats = load_stats()
+    s = get_user_stats(stats, user_id)
+    s["name"] = user_name
+    s["total"] += count
+    s["today"] += count
+    s["session"] += count
+    if s["session"] > s["record"]:
+        s["record"] = s["session"]
+    if photo_path:
+        ts = datetime.now(TBILISI_TZ).strftime("%Y%m%d_%H%M%S")
+        s["photos"].append({"path": photo_path, "count": count, "ts": ts})
+    save_stats(stats)
+    return s
+
+
+def get_leaderboard() -> list:
+    stats = load_stats()
     entries = sorted(
         [(uid, s) for uid, s in stats.items() if s.get("total", 0) > 0],
         key=lambda x: x[1]["total"],
         reverse=True,
     )[:10]
-    if not entries:
-        return "Пока никто не ел хинкали 😢"
-
-    medals = ["🥇", "🥈", "🥉"]
-    lines = ["🏅 *Топ хинкалеедов FFF*\n"]
-    for i, (uid, s) in enumerate(entries):
-        medal = medals[i] if i < 3 else f"{i+1}."
-        lines.append(f"{medal} {s['name']} — *{s['total']}* шт")
-    return "\n".join(lines)
+    return [{"rank": i+1, "name": s["name"], "total": s["total"], "today": s["today"], "record": s["record"]} for i, (uid, s) in enumerate(entries)]
 
 
-# Handlers
+# ─── Telegram Bot Handlers ───
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     keyboard = [[KeyboardButton("🥟 Счётчик хинкалей", web_app=WebAppInfo(url=WEBAPP_URL))]]
@@ -138,34 +148,22 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
 
-    # Download photo
-    photo = update.message.photo[-1]  # highest resolution
+    photo = update.message.photo[-1]
     file = await photo.get_file()
-
     ts = datetime.now(TBILISI_TZ).strftime("%Y%m%d_%H%M%S")
     photo_path = str(PHOTOS_DIR / f"{user_id}_{ts}.jpg")
     await file.download_to_drive(photo_path)
 
-    # Count khinkali
-    count = await count_khinkali_vision(photo_path)
+    with open(photo_path, "rb") as f:
+        img_data = base64.b64encode(f.read()).decode()
+
+    count = await count_khinkali_vision(img_data)
 
     if count == 0:
-        await update.message.reply_text(
-            "🤔 Не вижу хинкалей на фото! Сфоткай тарелку с хинкалями и попробуй ещё раз.",
-        )
+        await update.message.reply_text("🤔 Не вижу хинкалей на фото! Попробуй сфоткать ближе.")
         return
 
-    # Update stats
-    stats = load_stats()
-    s = get_user_stats(stats, user_id)
-    s["name"] = user_name
-    s["total"] += count
-    s["today"] += count
-    s["session"] += count
-    if s["session"] > s["record"]:
-        s["record"] = s["session"]
-    s["photos"].append({"path": photo_path, "count": count, "ts": ts})
-    save_stats(stats)
+    s = add_khinkali(user_id, user_name, count, photo_path)
 
     await update.message.reply_text(
         f"🥟 *+{count} хинкали!*\n\n"
@@ -178,8 +176,16 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 
 async def top(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    stats = load_stats()
-    await update.message.reply_text(format_leaderboard(stats), parse_mode="Markdown")
+    lb = get_leaderboard()
+    if not lb:
+        await update.message.reply_text("Пока никто не ел хинкали 😢")
+        return
+    medals = ["🥇", "🥈", "🥉"]
+    lines = ["🏅 *Топ хинкалеедов FFF*\n"]
+    for e in lb:
+        medal = medals[e["rank"]-1] if e["rank"] <= 3 else f"{e['rank']}."
+        lines.append(f"{medal} {e['name']} — *{e['total']}* шт")
+    await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
 
 
 async def my_stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -204,14 +210,88 @@ async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     s = get_user_stats(stats, user_id)
     s["session"] = 0
     save_stats(stats)
-    await update.message.reply_text("✅ Сессия сброшена. Начинай новый заход! 🥟")
+    await update.message.reply_text("✅ Сессия сброшена! 🥟")
 
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("📸 Отправь фото хинкалей! Без пруфа не считается 😉")
 
 
-def main() -> None:
+# ─── API Server ───
+
+async def api_stats(request):
+    user_id = request.match_info["user_id"]
+    stats = load_stats()
+    s = get_user_stats(stats, user_id)
+    return web.json_response(s, headers={"Access-Control-Allow-Origin": "*"})
+
+
+async def api_leaderboard(request):
+    return web.json_response(get_leaderboard(), headers={"Access-Control-Allow-Origin": "*"})
+
+
+async def api_upload(request):
+    try:
+        reader = await request.multipart()
+        user_id = None
+        user_name = "Гость"
+        img_data = None
+
+        while True:
+            part = await reader.next()
+            if part is None:
+                break
+            if part.name == "user_id":
+                user_id = (await part.text()).strip()
+            elif part.name == "user_name":
+                user_name = (await part.text()).strip()
+            elif part.name == "photo":
+                raw = await part.read()
+                img_data = base64.b64encode(raw).decode()
+                ts = datetime.now(TBILISI_TZ).strftime("%Y%m%d_%H%M%S")
+                photo_path = str(PHOTOS_DIR / f"{user_id or 'anon'}_{ts}.jpg")
+                with open(photo_path, "wb") as f:
+                    f.write(raw)
+
+        if not img_data:
+            return web.json_response({"error": "no photo"}, status=400, headers={"Access-Control-Allow-Origin": "*"})
+
+        count = await count_khinkali_vision(img_data)
+        if count == 0:
+            return web.json_response({"error": "no khinkali found", "count": 0}, headers={"Access-Control-Allow-Origin": "*"})
+
+        s = add_khinkali(user_id or "anon", user_name, count, photo_path)
+        return web.json_response({"count": count, "stats": s}, headers={"Access-Control-Allow-Origin": "*"})
+    except Exception as exc:
+        return web.json_response({"error": str(exc)}, status=500, headers={"Access-Control-Allow-Origin": "*"})
+
+
+async def api_cors(request):
+    return web.Response(headers={
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+    })
+
+
+def run_api():
+    app = web.Application()
+    app.router.add_get("/api/stats/{user_id}", api_stats)
+    app.router.add_get("/api/leaderboard", api_leaderboard)
+    app.router.add_post("/api/upload", api_upload)
+    app.router.add_route("OPTIONS", "/api/{path:.*}", api_cors)
+    web.run_app(app, host="0.0.0.0", port=API_PORT, print=None)
+
+
+# ─── Main ───
+
+def main():
+    # Start API in background thread
+    api_thread = Thread(target=run_api, daemon=True)
+    api_thread.start()
+    log.info(f"API server on port {API_PORT}")
+
+    # Start bot
     app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("top", top))
