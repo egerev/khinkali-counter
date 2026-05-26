@@ -18,21 +18,24 @@
             color: #3d3529;
         }
         h1 {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 800;
             text-align: center;
-            margin-top: 10px;
+            margin-top: 40px;
             line-height: 1.2;
         }
         .khinkali-img {
-            width: 160px;
-            height: 160px;
-            margin: 15px 0;
-            font-size: 120px;
+            width: 140px;
+            height: 140px;
+            margin: 10px 0;
             text-align: center;
-            line-height: 160px;
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
             transition: transform 0.15s;
+        }
+        .khinkali-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
         .khinkali-img.bounce {
             transform: scale(1.2);
@@ -130,7 +133,32 @@
 </head>
 <body>
     <h1>Счётчик<br>съеденных хинкалей</h1>
-    <div class="khinkali-img" id="emoji">🥟</div>
+    <div class="khinkali-img" id="emoji">
+        <svg viewBox="0 0 200 200" width="140" height="140">
+            <defs>
+                <radialGradient id="g1" cx="40%" cy="35%">
+                    <stop offset="0%" stop-color="#f5e6c8"/>
+                    <stop offset="100%" stop-color="#d4b896"/>
+                </radialGradient>
+            </defs>
+            <!-- Body -->
+            <ellipse cx="100" cy="120" rx="70" ry="55" fill="url(#g1)" stroke="#c4a070" stroke-width="1.5"/>
+            <!-- Top knot -->
+            <path d="M100 65 Q85 50 90 35 Q95 25 100 30 Q105 25 110 35 Q115 50 100 65Z" fill="#d4b896" stroke="#c4a070" stroke-width="1.5"/>
+            <!-- Pleats -->
+            <path d="M55 95 Q70 80 85 90" fill="none" stroke="#c4a070" stroke-width="1.5" opacity="0.6"/>
+            <path d="M70 85 Q85 72 100 82" fill="none" stroke="#c4a070" stroke-width="1.5" opacity="0.6"/>
+            <path d="M100 82 Q115 72 130 85" fill="none" stroke="#c4a070" stroke-width="1.5" opacity="0.6"/>
+            <path d="M115 90 Q130 80 145 95" fill="none" stroke="#c4a070" stroke-width="1.5" opacity="0.6"/>
+            <!-- Face -->
+            <circle cx="85" cy="115" r="3" fill="#5a4a3a"/>
+            <circle cx="115" cy="115" r="3" fill="#5a4a3a"/>
+            <path d="M92 128 Q100 135 108 128" fill="none" stroke="#5a4a3a" stroke-width="2" stroke-linecap="round"/>
+            <!-- Cheeks -->
+            <circle cx="78" cy="125" r="6" fill="#f0c0a0" opacity="0.4"/>
+            <circle cx="122" cy="125" r="6" fill="#f0c0a0" opacity="0.4"/>
+        </svg>
+    </div>
     <div class="counter-box">
         <div class="counter" id="count">0</div>
     </div>
