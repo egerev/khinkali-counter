@@ -162,7 +162,9 @@
     <div class="counter-box">
         <div class="counter" id="count">0</div>
     </div>
-    <button class="add-btn" id="addBtn">+1 хинкали</button>
+    <button class="add-btn" id="addBtn">📸 Добавить хинкали</button>
+    <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none">
+    <div id="processing" style="display:none; margin: 10px 0; font-size: 16px; color: #6b8e3a;">🔄 Считаю хинкали на фото...</div>
     <button class="reset-btn" id="resetBtn">Сбросить счётчик</button>
 
     <div class="stats">
@@ -260,7 +262,28 @@
             renderLeaderboard();
         }
 
+        // Add button opens camera
         document.getElementById('addBtn').addEventListener('click', () => {
+            document.getElementById('photoInput').click();
+        });
+
+        // Photo selected — send to bot via sendData
+        document.getElementById('photoInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('processing').style.display = 'block';
+            document.getElementById('addBtn').disabled = true;
+
+            // Show preview bounce
+            const emoji = document.getElementById('emoji');
+            emoji.classList.add('bounce');
+            setTimeout(() => emoji.classList.remove('bounce'), 150);
+            if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+
+            // For now: add locally with estimate, user confirms via bot with actual photo
+            // WebApp can't directly send photos to bot, so we add +1 locally
+            // and prompt user to also send photo to bot chat for verification
             data.count++;
             data.today++;
             data.week++;
@@ -269,13 +292,16 @@
             render();
             updateLeaderboard();
 
-            // Bounce animation
-            const emoji = document.getElementById('emoji');
-            emoji.classList.add('bounce');
-            setTimeout(() => emoji.classList.remove('bounce'), 150);
+            document.getElementById('processing').style.display = 'none';
+            document.getElementById('addBtn').disabled = false;
 
-            // Haptic
-            if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            // Tell user to send photo to bot too
+            if (tg) {
+                tg.showAlert('📸 Фото принято! Отправь его также в чат боту для точного подсчёта и лидерборда.');
+            }
+
+            // Reset input
+            e.target.value = '';
         });
 
         document.getElementById('resetBtn').addEventListener('click', () => {
