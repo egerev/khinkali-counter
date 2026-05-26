@@ -144,39 +144,30 @@
         }
 
         async function uploadPhoto(file) {
-            if (!API_BASE) {
-                if (tg) tg.showAlert('📸 Отправь фото прямо в чат бота — там посчитаю!');
-                return;
-            }
-            const form = new FormData();
-            form.append('photo', file);
-            form.append('user_id', userId);
-            form.append('user_name', userName);
-
             document.getElementById('processing').style.display = 'block';
             document.getElementById('error').style.display = 'none';
             document.getElementById('addBtn').disabled = true;
 
             try {
-                const resp = await fetch(`${API_BASE}/api/upload`, { method: 'POST', body: form });
-                const data = await resp.json();
-                if (data.error && data.count === 0) {
-                    document.getElementById('error').textContent = '🤔 Не вижу хинкалей! Попробуй ещё.';
-                    document.getElementById('error').style.display = 'block';
-                } else if (data.count) {
-                    // Bounce
-                    const emoji = document.getElementById('emoji');
-                    emoji.classList.add('bounce');
-                    setTimeout(() => emoji.classList.remove('bounce'), 150);
-                    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-                    if (tg) tg.showAlert(`🥟 +${data.count} хинкали!`);
-                    await loadStats();
-                    await loadLeaderboard();
-                }
+                // Convert photo to base64 and send via Telegram WebApp
+                const reader = new FileReader();
+                reader.onload = function() {
+                    const base64 = reader.result.split(',')[1]; // remove data:image prefix
+                    if (tg) {
+                        // Send photo data to bot via sendData
+                        tg.sendData(JSON.stringify({
+                            type: 'photo',
+                            photo: base64,
+                            user_id: userId,
+                            user_name: userName,
+                        }));
+                        // WebApp closes after sendData — bot will process and reply in chat
+                    }
+                };
+                reader.readAsDataURL(file);
             } catch(e) {
-                document.getElementById('error').textContent = 'Ошибка загрузки';
+                document.getElementById('error').textContent = 'Ошибка: ' + e.message;
                 document.getElementById('error').style.display = 'block';
-            } finally {
                 document.getElementById('processing').style.display = 'none';
                 document.getElementById('addBtn').disabled = false;
             }
